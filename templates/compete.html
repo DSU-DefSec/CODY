@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <title>Compete</title>
+
+    <!-- Metadata and resources
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/fonts.css">
+    <link rel="stylesheet" href="/assets/normalize.css">
+    <link rel="stylesheet" href="/assets/skeleton.css">
+    <link rel="stylesheet" href="/assets/main.css">
+    <link rel="icon" type="image/png" href="/assets/favicon.ico">
+
+</head>
+<body>
+    <!-- Primary Page Layout
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+    <div class="container">
+        <div class="row" style="margin-top: 5rem">
+            <div class="three columns">
+                <div>
+                    <a href="https://github.com/DSU-DefSec">
+                        <img id="headerImage" src="/assets/defsec.png"/>
+                    </a>
+                </div>
+                &nbsp;
+
+            </div>
+            <div class="seven columns">
+                <h2>Compete</h2>
+            </div>
+            <div class="two columns">
+                <button>
+                    New
+                </button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="three columns">
+                <div id="sideNav">
+                    <div><a href="/maize/compete">Compete</a></div>
+                    <div><a href="/maize/learn">Learn</a></div>
+                    <div><a href="/maize/deploy">Deploy</a></div>
+                    <div><a href="/maize/upcoming">Upcoming</a></div>
+                    <div><a href="/about">About</a></div>
+                    <div><a href="/logout">Logout</a></div>
+                </div>
+                <hr>
+                <div style="margin-top: 2rem">
+                    <div>
+                        <a href="#">Leaderboard</a>
+                    </div>
+                    asdasdasd
+                    asdasdasd
+                    asdasd
+                </div>
+            </div>
+
+       <button id="ajaxButton" type="button">Make a request</button>
+
+<script>
+(function() {
+  var httpRequest;
+  document.getElementById("ajaxButton").addEventListener('click', makeRequest);
+
+  function makeRequest() {
+    httpRequest = new XMLHttpRequest();
+
+    if (!httpRequest) {
+      alert('Giving up :( Cannot create an XMLHTTP instance');
+      return false;
+    }
+    httpRequest.onreadystatechange = alertContents;
+    httpRequest.open('GET', 'upcoming');
+    httpRequest.send();
+  }
+
+  function alertContents() {
+    if (httpRequest.readyState === XMLHttpRequest.DONE) {
+      if (httpRequest.status === 200) {
+        alert(httpRequest.responseText);
+      } else {
+        alert('There was a problem with the request.', httpRequest.status);
+      }
+    }
+  }
+})();
+</script>
+
+
+        <div class="nine columns" style="background-color: lightblue">
+            the rest
+        </div>
+
+        </div>
+
+    </div>
+
+    <!-- End Document
+    –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+
+</body>
+</html>

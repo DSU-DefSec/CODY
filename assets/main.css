@@ -1,0 +1,70 @@
+/*
+* DSU MaizeNet custom CSS
+*/
+
+/* Side pane
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+#headerImage {
+    width: 7rem;
+    display: none;
+}
+
+#headerTitle {
+    display: none;
+    font-weight: 300;
+    font-size: 3.2rem;
+    margin-left: 5rem;
+    margin-top: 0.5rem;
+}
+
+#sideNav {
+    font-weight: bold;
+}
+
+#sideNav a {
+    text-decoration: none;
+    color: #00A9E0;
+}
+
+#sideNav a:hover {
+    text-decoration: none;
+    color: #00bcf3;
+}
+
+
+/* Larger than phablet (also point when grid becomes active) */
+@media (min-width: 550px) {
+
+    #headerImage {
+        display: block;
+    }
+
+}
+
+
+
+/* Media Queries
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+/*
+Note: The best way to structure the use of media queries is to create the queries
+near the relevant code. For example, if you wanted to change the styles for buttons
+on small devices, paste the mobile query code up in the buttons section and style it
+there.
+*/
+
+
+/* Larger than mobile */
+@media (min-width: 400px) {}
+
+/* Larger than phablet (also point when grid becomes active) */
+@media (min-width: 550px) {}
+
+/* Larger than tablet */
+@media (min-width: 750px) {}
+
+/* Larger than desktop */
+@media (min-width: 1000px) {}
+
+/* Larger than Desktop HD */
+@media (min-width: 1200px) {}
