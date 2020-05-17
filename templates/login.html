@@ -3,7 +3,7 @@
 <head>
 
     <meta charset="utf-8">
-    <title>MaizeNet</title>
+    <title>HackerNet</title>
 
     <!-- Metadata and resources
     –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -23,8 +23,17 @@
         <div class="row">
             <div class="one-half column" style="margin-top: 25%">
                 <img style="width: 11rem;" src="assets/defsec.png"/>
-                <h3>MaizeNet</h3>
+                <h3>HackerNet</h3>
                 <p>
+
+                <!-- Display error
+                –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+                {{ if .error }}
+                    <div class="error">
+                        {{ .error }}
+                    </div>
+                    <br>
+                {{ end }}
 
                 <!-- Login Form
                 –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -35,6 +44,7 @@
                     </div>
                     <input class="button-primary" type="submit" value="Login">
                 </form>
+
 
             </div>
         </div>

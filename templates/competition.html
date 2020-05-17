@@ -1,0 +1,110 @@
+{{ $competition := .competition }}
+{{ template "begin.html" }}
+    <title>{{ $competition.Title }}</title>
+    <script src="/assets/jquery.min.js"></script>
+{{ template "head.html"}}
+            <div class="nine columns">
+                <h2>Competition</h2>
+            </div>
+{{ template "sidebar.html" }}
+                {{ $user := .user }}
+                <b>{{ $user.Name }}</b><br>
+                {{ $user.Score }} points
+            <hr>
+            </div>
+
+            <!-- Lesson content
+            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+            <div class="nine columns sectionContainer">
+                <div class="row">
+                    <div class="eight columns">
+                        <h4><b>{{ $competition.Title }}</b></h4>
+                    </div>
+                    {{ if eq $user.Name $competition.Field3 }}
+                    <div class="three columns">
+                        <input class="button-primary" id="deployButton" type="button" value="Loading" onclick="deployVapp();">
+                        <input class="button-primary" id="resetButton" type="button" value="Reset" onclick="resetVote();">
+                    </div>
+                    {{ end }}
+                </div>
+
+                <div class="row sectionItem">
+                    <div class="six columns">
+                        {{ $competition.Field1 }}
+                    </div>
+                </div>
+                <br>
+
+                big score graph
+                <br>
+
+                competitors in lil circles
+                <br>
+
+                <div id="boxIPs">
+                    <h5>Boxes</h5>
+                    <div>
+                        <p id="ipAddress">0.0.0.0</p>
+                    </div>
+                </div>
+                <hr>
+
+                {{ if eq $user.Name $competition.Field3 }}
+                <div class="row" id="endButton">
+                    <div class="eight columns sectionItemTitle">
+                        You had a good run, chief...
+                    </div>
+                    <div class="three columns">
+                        <input class="button" id="endButton" type="button" value="Compn't" style="margin-bottom: 0" onclick="endComp();">
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+
+        <script>
+            $("#resetButton").hide()
+            $("#endButton").hide()
+            $("#boxIPs").hide()
+
+            url = 'ws://' + site + '/compete/{{ $competition.Title }}/ws';
+            c = new WebSocket(url);
+
+            function handleWS(msg) {
+
+            }
+
+            function initializeWS(msg) {
+                if (msg.data == "Ready") {
+                    $("#deployButton").hide()
+                    $("#resetButton").show()
+                    $("#endButton").show()
+                    $("#ipBox").html("ip here")
+                    c.onmessage = handleWS
+                } else {
+                    $("#deployButton").attr("value", msg.data);
+                }
+            }
+
+            c.onmessage = initializeWS
+            c.onopen = function() {
+                c.send("{{ $competition.Title }}")
+            }
+
+            function deployVapp() {
+                c.send("deploy:{{ $competition.Title }}:none")
+                $("#deployButton").attr("value", "Working");
+            }
+
+            function resetVote() {
+                $("#resetButton").attr("value", "I wanna reset >:(");
+                c.send("{{ $user.Name }}:{{ $competition.Title }}:{{ $competition.Vapp }}")
+            }
+              c.onclose = function() {
+                alert("closed");
+              }
+              c.onerror = function() {
+                alert("error");
+              }
+        </script>
+
+{{ template "footer.html" }}

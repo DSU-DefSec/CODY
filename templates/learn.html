@@ -1,0 +1,71 @@
+{{ template "begin.html" }}
+    <title>Learn</title>
+    <script src="/assets/jquery.min.js"></script>
+{{ template "head.html"}}
+            <div class="nine columns">
+                <h2>Learn</h2>
+            </div>
+{{ template "sidebar.html" }}
+                {{ $user := .user }}
+                <b>{{ $user.Name }}</b><br>
+                {{ $user.Score }} points
+            <hr>
+            </div>
+
+            <!-- Search script
+            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+            <script>
+            $(document).ready(function(){
+              $("#lesson").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $(".sectionItem").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value.trim()) > -1)
+                });
+              });
+            });
+            </script>
+
+            <!-- Search box
+            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+            <div class="nine columns sectionContainer">
+
+                <!-- Display error
+                –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+                {{ if .error }}
+                    <div class="error">
+                        {{ .error }}
+                    </div>
+                    <br>
+                {{ end }}
+
+                <form>
+                  <label for="lesson">Lesson Identifier or Title</label>
+                  <input class="u-full-width" type="text" placeholder="DL101" id="lesson">
+                </form>
+
+                <!-- Available Lessons
+                –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+                {{ if not .lessons }}
+                <div class="row sectionItem">
+                    <div class="twelve columns sectionItemTitle">
+                        No lessons are out at the moment!
+                    </div>
+                </div>
+                {{ end }}
+                {{ range $lesson := .lessons }}
+                <div class="row sectionItem" id="Crackhead">
+                    <div class="two columns sectionItemTitle">
+                        icon
+                    </div>
+                    <a href="/learn/{{ $lesson.Vapp }}">
+                        <div class="three columns sectionItemTitle lessonIdentifier">
+                            {{ $lesson.Vapp }}
+                        </div>
+                    </a>
+                    <div class="six columns sectionItemTitle">{{ $lesson.Title }}</div>
+                </div>
+                {{ end }}
+                <br>
+            </div>
+
+{{ template "footer.html" }}

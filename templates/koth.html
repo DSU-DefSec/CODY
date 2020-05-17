@@ -1,0 +1,68 @@
+{{ $lesson := .lesson }}
+{{ template "begin.html" }}
+    <title>{{ $lesson.Vapp }}</title>
+    <script src="/assets/jquery.min.js"></script>
+{{ template "head.html"}}
+            <div class="nine columns">
+                <h2>Lesson</h2>
+            </div>
+{{ template "sidebar.html" }}
+                {{ $user := .user }}
+                <b>{{ $user.Name }}</b><br>
+                {{ $user.Score }} points
+            <hr>
+            </div>
+
+            <!-- Lesson content
+            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+            <div class="nine columns sectionContainer">
+                <div class="row">
+                    <div class="seven columns">
+                        <h4>{{ $lesson.Vapp }}: <b>{{ $lesson.Title }}</b></h4>
+                    </div>
+                    <div class="two columns">
+                        <p id="ipAddress">0.0.0.0</p>
+                    </div>
+                    <div class="three columns">
+                        <input class="button-primary" id="deployButton" type="button" value="Deploy" onclick="deployVapp();">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="six columns sectionItem">
+                        {{ $lesson.Field1 }}
+                    </div>
+                </div>
+                <br>
+
+                <iframe width="100%" height="350px" src="https://www.youtube-nocookie.com/embed/{{ $lesson.Field2 }}" frameborder="0" allowfullscreen></iframe>
+                Other resources: PDF
+                slides
+                <br>
+
+                <br>
+                <p><a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vS3-eeM4HIrwI0M56svbmz4aeIvgeUF7E7e5GSu2otABPShoKrF8wPHtsNpaDcdpk7USH-GspwHFD-A/pubhtml#">See slides and other resources here.</a>.</p>
+
+            </div>
+
+        <div id="output"></div>
+
+        <script>
+            url = 'ws://localhost:8080/deployws';
+            c = new WebSocket(url);
+
+            function deployVapp(vapp) {
+                $("#deployButton").attr("value", "Working");
+                c.send({{ $lesson.Vapp }})
+            }
+
+            c.onmessage = function(msg){
+                $("#deployButton").attr("value", msg.data)
+                if (msg.data == "Deployed!") {
+                    // turn on
+                    // get ip of primary box for vapp
+                    $("#ipBox").html("ip here")
+                }
+            }
+        </script>
+
+{{ template "footer.html" }}

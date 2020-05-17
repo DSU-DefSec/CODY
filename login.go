@@ -1,19 +1,26 @@
 package main
 
 import (
-    "fmt"
-    "strings"
-    "github.com/gin-gonic/gin"
-    "net/http"
-    "github.com/gin-gonic/contrib/sessions"
+	"fmt"
+	"github.com/gin-gonic/contrib/sessions"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
+)
+
+var prevPath string = "/"
+
+const (
+	userkey = "user"
 )
 
 func AuthRequired(c *gin.Context) {
 	session := sessions.Default(c)
 	user := session.Get(userkey)
+	prevPath = c.Request.URL.Path
 	if user == nil {
-    	c.Redirect(http.StatusSeeOther, "/login")
-		return
+		c.Redirect(http.StatusSeeOther, "/login")
+		c.Abort()
 	}
 	c.Next()
 }
@@ -26,13 +33,14 @@ func login(c *gin.Context) {
 
 	// Validate form input
 	if strings.Trim(username, " ") == "" || strings.Trim(password, " ") == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
+		c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Username or password can't be empty 🙄"})
 		return
 	}
 
-	// Check for username and password match, usually from a database
-	if username != "hello" || password != "itsme" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
+	// FETCH FROM IALAB lol
+	err := vcloudAuth(username, password)
+	if err != nil {
+		c.HTML(http.StatusBadRequest, "login.html", gin.H{"error": "Incorrect username or password."})
 		return
 	}
 
@@ -42,8 +50,13 @@ func login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
 		return
 	}
-    fmt.Println("logged in good!")
-	c.Redirect(http.StatusSeeOther, "/maize/")
+	c.Redirect(http.StatusSeeOther, prevPath)
+	prevPath = "/"
+}
+
+func getUserName(c *gin.Context) string {
+	session := sessions.Default(c)
+	return fmt.Sprintf("%s", session.Get(userkey))
 }
 
 func logout(c *gin.Context) {
@@ -58,6 +71,5 @@ func logout(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
 		return
 	}
-    fmt.Println("logged out good!")
 	c.Redirect(http.StatusSeeOther, "/login")
 }

@@ -1,12 +1,29 @@
 /*
-* DSU MaizeNet custom CSS
+* Hackernet CSS
 */
+
+/* General styling
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+.error {
+    border: 1px solid red;
+    border-radius: 1rem;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+.msg {
+    border: 1px solid #00A9E0;
+    border-radius: 1rem;
+    padding: 0.5rem;
+    text-align: center;
+}
 
 /* Side pane
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
 
 #headerImage {
-    width: 7rem;
+    width: 7.5rem;
     display: none;
 }
 
@@ -18,18 +35,16 @@
     margin-top: 0.5rem;
 }
 
-#sideNav {
+#sideNav a, .sectionItem a {
     font-weight: bold;
-}
-
-#sideNav a {
     text-decoration: none;
+    font-size: 1.6rem;
     color: #00A9E0;
 }
 
-#sideNav a:hover {
+#sideNav a:hover, .sectionItem a:hover {
     text-decoration: none;
-    color: #00bcf3;
+    color: #00cff9;
 }
 
 
@@ -42,7 +57,91 @@
 
 }
 
+/* Main panel styling
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
 
+.noPad {
+    padding: 0;
+}
+
+#ipAddress {
+    text-align: left;
+    vertical-align: middle;
+    font-family: Consolas, monospace;
+}
+
+#leaderboardItem {
+    text-align: left;
+    padding-left: 3rem;
+}
+
+.sectionItem:nth-of-type(2n) {
+    background-color: #f5f5f5;
+    border-radius: 0.5rem;
+}
+
+.sectionItem {
+    padding: 1.5rem 1rem 1.5rem 1.5rem;
+}
+
+.sectionItem svg {
+    width: 1.8rem;
+    height: 1.8rem;
+    padding-top: 1rem;
+}
+
+.sectionItem div {
+    display: block;
+    padding: 0.5rem;
+    text-align: center;
+    vertical-align: center;
+}
+
+.sectionItem a {
+    display: block;
+}
+
+@media (min-width: 550px) {
+
+    .three hr {
+        margin-left: 0;
+        width: 75%;
+    }
+
+    #ipAddress {
+        padding-top: 1rem;
+    }
+
+    .sectionItemTitle {
+        text-align: left !important;
+        margin-left: 1.5rem !important;
+    }
+
+    .sectionItem {
+        position: relative;
+    }
+
+    .sectionItemTitle {
+    }
+
+    .sectionItem svg {
+        width: 1.8rem;
+        height: 1.8rem;
+        margin-left: 0.5rem;
+        padding-top: 0;
+        position: absolute;
+        top: 50%;
+        bottom: 50%;
+        transform:translate(-50%, -50%);
+    }
+}
+
+/* Competition styles
+–––––––––––––––––––––––––––––––––––––––––––––––––– */
+
+#endButton {
+    border-color: red;
+}
 
 /* Media Queries
 –––––––––––––––––––––––––––––––––––––––––––––––––– */
