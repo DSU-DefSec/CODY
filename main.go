@@ -5,15 +5,29 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"regexp"
-	"time"
+    "flag"
+    "fmt"
 )
 
+func init() {
+	flag.StringVar(&webDeployAPI, "w", "", "WebDeploy Endpoint")
+	flag.StringVar(&webDeployAPIPassword, "p", "", "WebDeploy Password")
+	flag.Parse()
+}
+
 // Web-Deploy API Endpoint
-var webDeployAPI string = "http://192.168.1.100/api"
+var webDeployAPI string
+var webDeployAPIPassword string
 var buttonArray map[string][]string = make(map[string][]string)
 
 func main() {
 
+	if webDeployAPI == "" || webDeployAPIPassword == "" {
+		fmt.Println("Missing parameters.")
+		fmt.Println("Usage: ./cody -w endpoint -p password")
+		return
+	}
+    fmt.Println("passsord is", webDeployAPIPassword)
 	// reset Db (dev only reee)
 	resetDB()
 
@@ -43,17 +57,11 @@ func main() {
 	internalRoutes := routes.Group("/")
 	internalRoutes.Use(AuthRequired)
 	{
-		internalRoutes.GET("/", compete)
-		internalRoutes.GET("/compete", compete)
-		internalRoutes.GET("/compete/:title", competition)
-		internalRoutes.GET("/compete/:title/ws", func(c *gin.Context) {
-			competitionEndpoint(c)
-		})
+		internalRoutes.GET("/", learn)
 		internalRoutes.GET("/learn", learn)
 		internalRoutes.GET("/learn/:vapp", lesson)
 		internalRoutes.GET("/deploy", deploy)
 		internalRoutes.GET("/deploy/ws", deployWS)
-		internalRoutes.GET("/leaderboard", leaderboard)
 		internalRoutes.GET("/about", func(c *gin.Context) {
 			c.HTML(http.StatusOK, "about.html", gin.H{"user": getUser(c)})
 		})
@@ -64,7 +72,6 @@ func main() {
 		"admin": "password",
 	}))
 	{
-		apiRoutes.POST("/compete", createCompetition)
 		apiRoutes.POST("/learn", createLesson)
 	}
 	r.Run()
@@ -73,34 +80,6 @@ func main() {
 ///////////////////
 // GET Endpoints //
 ///////////////////
-
-func compete(c *gin.Context) {
-	competitions := getEvents(01)
-	c.HTML(http.StatusOK, "compete.html", gin.H{"competitions": competitions, "user": getUser(c)})
-}
-
-func competition(c *gin.Context) {
-	title := c.Param("title")
-	if validateCompetition(c, title) {
-    	competition, _ := getEvent("title", title)
-    	c.HTML(http.StatusOK, "competition.html", gin.H{"competition": competition, "user": getUser(c)})
-    }
-}
-
-func validateCompetition(c *gin.Context, title string) bool {
-	if !validateName(title) {
-    	competitions := getEvents(01)
-    	c.HTML(http.StatusOK, "compete.html", gin.H{"error": "Invalid competition name", "competitions": competitions, "user": getUser(c)})
-		return false
-	}
-	competition, _ := getEvent("title", title)
-	if competition.Vapp == "" {
-		competitions := getEvents(01)
-		c.HTML(http.StatusOK, "compete.html", gin.H{"error": "Sorry, that competition doesn't exist.", "competitions": competitions, "user": getUser(c)})
-		return false
-	}
-    return true
-}
 
 func learn(c *gin.Context) {
 	lessons := getEvents(10)
@@ -127,10 +106,6 @@ func deploy(c *gin.Context) {
 	c.HTML(http.StatusOK, "deploy.html", gin.H{"user": getUser(c)})
 }
 
-func leaderboard(c *gin.Context) {
-	c.HTML(http.StatusOK, "leaderboard.html", gin.H{"leaderboard": getLeaderboard(), "user": getUser(c)})
-}
-
 ////////////////////
 // POST Endpoints //
 ////////////////////
@@ -139,50 +114,22 @@ func createLesson(c *gin.Context) {
 	c.Request.ParseForm()
 	title := c.Request.Form.Get("title")
 	vapp := c.Request.Form.Get("vapp")
+	description := c.Request.Form.Get("description")
+	video := c.Request.Form.Get("video")
 	if title == "" || vapp == "" {
-		c.JSON(http.StatusBadRequest, nil)
+		c.JSON(http.StatusBadRequest, "Bad request")
 		return
 	}
-	addEvent(Event{
+	err := addEvent(Event{
 		Type:   10,
 		Title:  title,
 		Vapp:   vapp,
-		Field1: "description",
-		Field2: "youtube",
-		Field3: "pdf",
+		Field1: description,
+		Field2: video,
+		Field3: "pdf", // placeholder
 	})
-	c.JSON(http.StatusOK, nil)
-}
-
-func createCompetition(c *gin.Context) {
-	c.Request.ParseForm()
-	start := time.Now().String() // should parse datetime optionally
-	end := "2020-11-10 23:00:00 +0000 UTC"
-	private := false
-
-	title := c.Request.Form.Get("title")
-	vapp := c.Request.Form.Get("vapp")
-	kind := c.Request.Form.Get("kind")
-	owner := c.Request.Form.Get("owner")
-	if title == "" || vapp == "" || kind == "" || owner == "" {
-		c.JSON(http.StatusBadRequest, nil)
-		return
-	}
-
-	err := addEvent(Event{
-		Type:   01,
-		Kind:   kind,
-		Title:  title,
-		Vapp:   vapp,
-		Field1: start,
-		Field2: end,
-        Field3: owner,
-		Switch: private,
-	})
-    if err != nil {
-    	c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
-    }
-	c.JSON(http.StatusOK, nil)
+    fmt.Println(err)
+	c.JSON(http.StatusOK, "OK")
 }
 
 

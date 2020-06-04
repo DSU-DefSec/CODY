@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
 	"log"
     "strings"
 	"net/http"
@@ -26,15 +27,27 @@ func websocketTemplate(w http.ResponseWriter, r *http.Request, msgChannel chan s
 		log.Println(err)
 		return
 	}
+    go websocketReader(conn, msgChannel)
+    go websocketWriter(conn, msgChannel)
+}
+
+func websocketReader(conn *websocket.Conn, msgChannel chan string) {
     for {
-        messageType, p, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-			return
-		}
+        _, p, err := conn.ReadMessage()
+        fmt.Println("Reading", string(p))
+    	if err != nil {
+    		log.Println(err)
+    		return
+    	}
         msgChannel <- string(p)
+    }
+}
+
+func websocketWriter(conn *websocket.Conn, msgChannel chan string) {
+    for {
         response := <- msgChannel
-		if err := conn.WriteMessage(messageType, []byte(response)); err != nil {
+        fmt.Println("Writing", response)
+		if err := conn.WriteMessage(1, []byte(response)); err != nil {
 			log.Println(err)
 			return
 		}
@@ -46,9 +59,19 @@ func deployWS(c *gin.Context) {
     go websocketTemplate(c.Writer, c.Request, msgChannel)
 	for {
 		msg := <- msgChannel
-    	_, err := vappDeployUser(msg, getUserName(c))
+        msgChannel <- "Working"
+    	id, err := vappDeployUser(msg, getUserName(c))
 		if err != nil {
 			msgChannel <- err.Error()
+        } else if id != "" {
+            msgChannel <- "vApp was deployed. Powering on..."
+            ips, err := vappPowerAndIPs(id)
+            if err != nil {
+                msgChannel <- err.Error()
+                return
+            }
+            msgChannel <- "ips"
+            msgChannel <- ips
 		} else {
 			msgChannel <- "Deployed!"
 		}

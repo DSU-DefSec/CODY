@@ -7,8 +7,8 @@
             </div>
 {{ template "sidebar.html" }}
                 {{ $user := .user }}
+                Logged in as:<br>
                 <b>{{ $user.Name }}</b><br>
-                {{ $user.Score }} points
             <hr>
             </div>
 
@@ -53,9 +53,9 @@
                 </div>
                 {{ end }}
                 {{ range $lesson := .lessons }}
-                <div class="row sectionItem" id="Crackhead">
+                <div class="row sectionItem">
                     <div class="two columns sectionItemTitle">
-                        icon
+                        <i data-feather="book"></i>
                     </div>
                     <a href="/learn/{{ $lesson.Vapp }}">
                         <div class="three columns sectionItemTitle lessonIdentifier">

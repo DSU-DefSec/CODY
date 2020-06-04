@@ -7,8 +7,8 @@
             </div>
 {{ template "sidebar.html" }}
                 {{ $user := .user }}
+                Logged in as:<br>
                 <b>{{ $user.Name }}</b><br>
-                {{ $user.Score }} points
             <hr>
             </div>
 
@@ -39,26 +39,55 @@
                   <input class="u-full-width" type="text" placeholder="BH2014-MalwareVM" id="vappName" required pattern="[a-zA-Z0-9\-]+" name="vapp">
                   <input class="button-primary" type="submit" id="deployButton" value="Deploy to {{ $user.Name }}">
               </form>
+
+                <h4 id="ipHeader">IP Addresses</h4>
+                <div id="ipBox"></div>
             </div>
 
-            alternatively, if box is deployed, power it on and give the ips
-
             <script>
-                url = 'ws://localhost:8080/deploy/ws';
+
+                url = 'ws://' + site + '/deploy/ws';
                 c = new WebSocket(url);
+                $("#ipHeader").hide()
+                clientMessage = ""
+
+                c.onmessage = (msg) => {
+                    defaultMsg(msg);
+                }
+
+                function defaultMsg(msg) {
+                    $("#deployButton").attr("value", msg.data)
+                    if (msg.data == "ips") {
+                        $("#deployButton").attr("value", "Ready")
+                        c.onmessage = (msg) => {
+                            getIPs(msg);
+                        }
+                        $("#deployButton").attr("value", "Suspend")
+                        clientMessage = "Suspend VAPP_ID_HERE"
+                    }
+                }
+
+                function getIPs(msg) {
+                    $("#ipHeader").toggle();
+                    ipString = ""
+                    ipData = msg.data.split(",")
+                    for (var i = 0; i < ipData.length; i++) {
+                        ipString += ipData[i] + "<br>"
+                    }
+                    $("#ipBox").html(ipString);
+                    c.onmessage = (msg) => {
+                        defaultMsg(msg);
+                    }
+                }
 
                 $("#deployForm").submit(function (e) {
                     e.preventDefault();
-                    vapp = $("#vappName").val();
-                    c.send(vapp);
-                    $("#deployButton").attr("value", "Working");
-                    $("#deployButton").attr("onclick", "");
-
+                    if clientMessage == "" {
+                        clientMessage = $("#vappName").val();
+                    }
+                    c.send(clientMessage);
                 })
 
-                c.onmessage = function(msg){
-                    $("#deployButton").attr("value", msg.data)
-                }
             </script>
 
 {{ template "footer.html" }}

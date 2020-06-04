@@ -6,56 +6,23 @@
             </div>
 {{ template "sidebar.html" }}
                 {{ $user := .user }}
+                Logged in as:<br>
                 <b>{{ $user.Name }}</b><br>
-                {{ $user.Score }} points
+
             <hr>
             </div>
-
 
             <!-- About
             –––––––––––––––––––––––––––––––––––––––––––––––––– -->
             <div class="nine columns">
-                <h4>About this Site</h4>
-                <p>This site facilitates and automates cybersecurity competitions for <b>Dakota State University</b>'s <b>DefSec</b> and <b>OffSec</b> clubs. HackerNet was written to be as simple and fast as possible. It is open source and can be found at (GITHUB URL).</p>
+                <h4>This Site</h4>
+                <p>This site facilitates learning and vApp deployment for <b>Dakota State University</b>'s <b>DefSec</b> club. C.O.D.Y. was written to be as fast and to-the-point as possible. It is open source.</p>
 
-                <h4>About Learning</h4>
-                <p>The <code>Learn</code> tab contains interactive, hands-on micro-courses (μCourses?) put together by DSU's Defensive Security Club. Each one is comprised of a vApp, a PDF, Slides, and (if presented) a video recording. The accompanying scoring engine in most courses will give visual feedback if the goal of each course has been accomplished.</p>
+                <h4>Learning</h4>
+                <p>The <code>Learn</code> tab contains interactive, hands-on micro-courses (μCourses?) put together by DSU's Defensive Security Club.</p>
 
-                <h4>About Deploying</h4>
+                <h4>Deploying</h4>
                 <p>The <code>Deploy</code> tab will deploy a specified vApp to your account. It is a simple alternatve to the IALab's interface.</p>
-
-                <h4>About Competing</h4>
-
-                <h5><b>CyberConquest</b></h5>
-                <p>cyberconquest, see <a href="cyberconquest.org">this site</a></p>
-                <h5>cc rules</h5>
-                <p>cyberconquest, see <a href="cyberconquest.org">this site</a></p>
-
-                <h5><b>King of the Hill</b></h5>
-                <p>The <b>King of the Hill</b> (KOTH) game mode is both offensive and defensive. HackerNet gives the IP of one vulnerable machine to (up to) six competitors, who attempt to hack into the machine and maintain access while patching vulnerabilities, submitting flags, and obtaining the <code>root</code> or <code>Administrator</code> account to put their username in <code>/root/king.txt</code> or <code>C:\Users\Administrator\king.txt</code> to gain "king points." A scoring server is checking the box's services-- if half or more ( >= 50% ) of the box's services are down, king points will not be awarded.</p>
-
-                <h5>KOTH Rules</h5>
-                <ul>
-                    <li>Breaking into the Machine</li>
-                    <ul>
-                        <li>Attacking DSU IALAB infrastructure or anything other than the provided IP address is forbidden.</li>
-                        <li>The king scoring service on port 9999 is out of scope, otherwise any method to obtain code execution on the system is allowed.</li>
-                    </ul>
-                    <li>On the Machine</li>
-                    <ul>
-                        <li>Removing or modifying the or permissions of flags is forbidden.</li>
-                        <li>Blocking IPs or whitelisting your own IP is forbidden.</li>
-                        <li>Killing other user's sessions is allowed (if not scripted).</li>
-                        <li>Deleting, removing, or crippling services, files, and users are allowed, however one must be wary of failing service checks and losing the ability to gain king points.</li>
-                    </ul>
-                </ul>
-
-                <h5><b>Capture the Flag</b></h5>
-                <p>simple ctf deal, you get a download or instance, put in the flag</p>
-
-                <h5><b>HackTheBox</b></h5>
-                <p>hack-thebox style hack, given a box and get the flag loser. no limit on competitors, standard rules dont ddos dont be stupid dont ruin flags</p>
-
             </div>
 
 {{ template "footer.html" }}

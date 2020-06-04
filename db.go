@@ -67,9 +67,15 @@ func rawQueryDB(sqlQuery string) (*sql.Rows, error) {
 // HELPER/META STRUCTS //
 /////////////////////////
 
-type vapp struct {
+type vappData struct {
     Id string
-    IPs map[string]string
+    Images []imageData
+}
+
+type imageData struct {
+    Id string
+    Name string
+    IP string
 }
 
 ////////////////////////
@@ -143,8 +149,14 @@ func getEvent(key string, value string) (Event, error) {
 
 func addEvent(ev Event) error {
 
+    fmt.Println("titel  is", ev.Title)
     testEvent, err := getEvent("title", ev.Title)
-    if err != nil || testEvent.Title != "" {
+    fmt.Println("testEvent is", testEvent)
+    fmt.Println("err is", err)
+    if err != nil {
+        return err
+    }
+    if testEvent.Title != "" {
         return errors.New("Event already exists")
     }
 
