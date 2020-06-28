@@ -2,7 +2,7 @@ package main
 
 import (
 	"database/sql"
-    "errors"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -15,7 +15,7 @@ import (
 ///////////////////////////
 
 func openDB() *sql.DB {
-	db, err := sql.Open("sqlite3", "./hackernet.db")
+	db, err := sql.Open("sqlite3", "./cody.db")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,14 +68,14 @@ func rawQueryDB(sqlQuery string) (*sql.Rows, error) {
 /////////////////////////
 
 type vappData struct {
-    Id string
-    Images []imageData
+	Id     string
+	Images []imageData
 }
 
 type imageData struct {
-    Id string
-    Name string
-    IP string
+	Id   string
+	Name string
+	IP   string
 }
 
 ////////////////////////
@@ -126,9 +126,9 @@ func getEvents(eventType int) []Event {
 func getEvent(key string, value string) (Event, error) {
 
 	ev := Event{}
-    if ! validateName(key) || ! validateName(value) {
-        return Event{}, errors.New("Invalid input")
-    }
+	if !validateName(key) || !validateName(value) {
+		return Event{}, errors.New("Invalid input")
+	}
 
 	// lmao... use a parameterized query at least
 	event, err := rawQueryDB(fmt.Sprintf("SELECT * from `events` WHERE %s='%s'", key, value))
@@ -149,16 +149,16 @@ func getEvent(key string, value string) (Event, error) {
 
 func addEvent(ev Event) error {
 
-    fmt.Println("titel  is", ev.Title)
-    testEvent, err := getEvent("title", ev.Title)
-    fmt.Println("testEvent is", testEvent)
-    fmt.Println("err is", err)
-    if err != nil {
-        return err
-    }
-    if testEvent.Title != "" {
-        return errors.New("Event already exists")
-    }
+	fmt.Println("titel  is", ev.Title)
+	testEvent, err := getEvent("title", ev.Title)
+	fmt.Println("testEvent is", testEvent)
+	fmt.Println("err is", err)
+	if err != nil {
+		return err
+	}
+	if testEvent.Title != "" {
+		return errors.New("Event already exists")
+	}
 
 	db := openDB()
 	defer db.Close()
@@ -176,7 +176,7 @@ func addEvent(ev Event) error {
 		return err
 	}
 	tx.Commit()
-    return err
+	return err
 
 }
 

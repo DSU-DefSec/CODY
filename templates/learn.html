@@ -1,29 +1,5 @@
-{{ template "begin.html" }}
-    <title>Learn</title>
-    <script src="/assets/jquery.min.js"></script>
-{{ template "head.html"}}
-            <div class="nine columns">
-                <h2>Learn</h2>
-            </div>
-{{ template "sidebar.html" }}
-                {{ $user := .user }}
-                Logged in as:<br>
-                <b>{{ $user.Name }}</b><br>
-            <hr>
-            </div>
-
-            <!-- Search script
-            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
-            <script>
-            $(document).ready(function(){
-              $("#lesson").on("keyup", function() {
-                var value = $(this).val().toLowerCase();
-                $(".sectionItem").filter(function() {
-                  $(this).toggle($(this).text().toLowerCase().indexOf(value.trim()) > -1)
-                });
-              });
-            });
-            </script>
+{{ template "head.html" "Learn" }}
+{{ template "sidebar.html" . }}
 
             <!-- Search box
             –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -67,5 +43,19 @@
                 {{ end }}
                 <br>
             </div>
+
+            <!-- Search script
+            –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+		    <script src="/assets/jquery.min.js"></script>
+            <script>
+            $(document).ready(function(){
+              $("#lesson").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $(".sectionItem").filter(function() {
+                  $(this).toggle($(this).text().toLowerCase().indexOf(value.trim()) > -1)
+                });
+              });
+            });
+            </script>
 
 {{ template "footer.html" }}

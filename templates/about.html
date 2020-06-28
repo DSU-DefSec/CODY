@@ -1,16 +1,5 @@
-{{ template "begin.html" }}
-    <title>About</title>
-{{ template "head.html"}}
-            <div class="nine columns">
-                <h2>About</h2>
-            </div>
-{{ template "sidebar.html" }}
-                {{ $user := .user }}
-                Logged in as:<br>
-                <b>{{ $user.Name }}</b><br>
-
-            <hr>
-            </div>
+{{ template "head.html" "About" }}
+{{ template "sidebar.html" . }}
 
             <!-- About
             –––––––––––––––––––––––––––––––––––––––––––––––––– -->

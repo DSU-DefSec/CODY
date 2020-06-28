@@ -1,33 +1,48 @@
 package main
 
 import (
-	"github.com/gin-gonic/contrib/sessions"
-	"github.com/gin-gonic/gin"
-	"net/http"
-	"regexp"
     "flag"
     "fmt"
+	"net/http"
+	"regexp"
+
+	"github.com/google/uuid"
+	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 )
 
 func init() {
-	flag.StringVar(&webDeployAPI, "w", "", "WebDeploy Endpoint")
-	flag.StringVar(&webDeployAPIPassword, "p", "", "WebDeploy Password")
+	flag.StringVar(&vCloudUsername, "u", "", "Username for the vCloud account")
+	flag.StringVar(&vCloudPassword, "p", "", "Password for the vCloud account")
+	flag.StringVar(&vCloudAdmin, "a", "", "Username for the C.O.D.Y. admin")
 	flag.Parse()
 }
 
+const (
+	vOrg      = "Defsec"
+	vHref     = "https://vcloud.ialab.dsu.edu/api"
+	vVDC      = "DefSec_Default"
+	vInsecure = false
+)
+
 // Web-Deploy API Endpoint
-var webDeployAPI string
-var webDeployAPIPassword string
+var vCloudUsername string
+var vCloudPassword string
+var vCloudAdmin string
 var buttonArray map[string][]string = make(map[string][]string)
 
 func main() {
 
-	if webDeployAPI == "" || webDeployAPIPassword == "" {
+	if vCloudUsername == "" || vCloudPassword == "" || vCloudAdmin == "" {
 		fmt.Println("Missing parameters.")
-		fmt.Println("Usage: ./cody -w endpoint -p password")
+		fmt.Println("Usage: ./cody -u username -p password -a admin")
 		return
 	}
-    fmt.Println("passsord is", webDeployAPIPassword)
+
+	// Initialize vCloud connection
+	initVCD()
+
 	// reset Db (dev only reee)
 	resetDB()
 
@@ -35,7 +50,8 @@ func main() {
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/assets", "./assets")
-	r.Use(sessions.Sessions("cool_beans", sessions.NewCookieStore([]byte("secret"))))
+	store := cookie.NewStore([]byte(uuid.New().String()))
+	r.Use(sessions.Sessions("codySession", store))
 
 	// Routes
 	routes := r.Group("/")
@@ -46,7 +62,7 @@ func main() {
 			if user == nil {
 				c.HTML(http.StatusOK, "login.html", nil)
 			} else {
-				c.Redirect(http.StatusSeeOther, prevPath)
+				c.Redirect(http.StatusSeeOther, "/")
 			}
 			return
 		})
@@ -63,17 +79,12 @@ func main() {
 		internalRoutes.GET("/deploy", deploy)
 		internalRoutes.GET("/deploy/ws", deployWS)
 		internalRoutes.GET("/about", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "about.html", gin.H{"user": getUser(c)})
+			c.HTML(http.StatusOK, "about.html", pageData(c, gin.H{}))
 		})
+		internalRoutes.GET("/create", displayLesson)
+		internalRoutes.POST("/create", createLesson)
 	}
 
-	apiRoutes := routes.Group("/api", gin.BasicAuth(gin.Accounts{
-        // lol
-		"admin": "password",
-	}))
-	{
-		apiRoutes.POST("/learn", createLesson)
-	}
 	r.Run()
 }
 
@@ -83,27 +94,31 @@ func main() {
 
 func learn(c *gin.Context) {
 	lessons := getEvents(10)
-	c.HTML(http.StatusOK, "learn.html", gin.H{"lessons": lessons, "user": getUser(c)})
+	c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"lessons": lessons}))
 }
 
 func lesson(c *gin.Context) {
 	vapp := c.Param("vapp")
 	if !validateName(vapp) {
 		lessons := getEvents(10)
-		c.HTML(http.StatusOK, "learn.html", gin.H{"error": "Sorry, that lesson name isn't valid.", "lessons": lessons, "user": getUser(c)})
+		c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"error": "Sorry, that lesson name isn't valid.", "lessons": lessons}))
 		return
 	}
 	lesson, _ := getEvent("vapp", vapp)
 	if lesson.Vapp == "" {
 		lessons := getEvents(10)
-		c.HTML(http.StatusOK, "learn.html", gin.H{"error": "Sorry, that lesson doesn't exist.", "lessons": lessons, "user": getUser(c)})
+		c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"error": "Sorry, that lesson doesn't exist.", "lessons": lessons}))
 		return
 	}
-	c.HTML(http.StatusOK, "lesson.html", gin.H{"lesson": lesson, "user": getUser(c)})
+	c.HTML(http.StatusOK, "lesson.html", pageData(c, gin.H{"lesson": lesson}))
 }
 
 func deploy(c *gin.Context) {
-	c.HTML(http.StatusOK, "deploy.html", gin.H{"user": getUser(c)})
+	c.HTML(http.StatusOK, "deploy.html", pageData(c, gin.H{"user": getUser(c)}))
+}
+
+func displayLesson(c *gin.Context) {
+	c.HTML(http.StatusOK, "create.html", pageData(c, gin.H{"user": getUser(c)}))
 }
 
 ////////////////////
@@ -129,7 +144,7 @@ func createLesson(c *gin.Context) {
 		Field3: "pdf", // placeholder
 	})
     fmt.Println(err)
-	c.JSON(http.StatusOK, "OK")
+	c.Redirect(http.StatusSeeOther, "/learn")
 }
 
 
@@ -137,8 +152,15 @@ func createLesson(c *gin.Context) {
 // Helper functions //
 //////////////////////
 
-func getUser(c *gin.Context) Player {
-	return Player{getUserName(c), 100} // arbitrary points
+func pageData(c *gin.Context, ginMap gin.H) gin.H {
+	newGinMap := gin.H{}
+	newGinMap["user"] = getUser(c)
+	newGinMap["admin"] = vCloudAdmin
+	newGinMap["isAdmin"] = (newGinMap["user"] == newGinMap["admin"])
+	for key, value := range ginMap {
+		newGinMap[key] = value
+	}
+	return newGinMap
 }
 
 func validateName(name string) bool {

@@ -1,5 +1,3 @@
-        </div>
-
         <!-- Sidebar
         –––––––––––––––––––––––––––––––––––––––––––––––––– -->
         <div class="row">
@@ -7,7 +5,15 @@
                 <div id="sideNav">
                     <a href="/learn"><div>Learn</div></a>
                     <a href="/deploy"><div>Deploy</div></a>
+					{{ if .isAdmin }}
+                    <a href="/create"><div>New</div></a>
+					{{ end }}
                     <a href="/about"><div>About</div></a>
                     <a href="/logout"><div>Logout</div></a>
                 </div>
                 <hr>
+                Logged in as:<br>
+                <b>{{ .user }}</b><br>
+
+            <hr>
+            </div>

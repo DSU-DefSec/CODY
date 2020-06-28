@@ -1,16 +1,5 @@
-{{ template "begin.html" }}
-    <title>Deploy</title>
-    <script src="/assets/jquery.min.js"></script>
-{{ template "head.html"}}
-            <div class="nine columns">
-                <h2>Deploy vApp</h2>
-            </div>
-{{ template "sidebar.html" }}
-                {{ $user := .user }}
-                Logged in as:<br>
-                <b>{{ $user.Name }}</b><br>
-            <hr>
-            </div>
+{{ template "head.html" "Deploy vApp" }}
+{{ template "sidebar.html" . }}
 
             <!-- Deployment box
             –––––––––––––––––––––––––––––––––––––––––––––––––– -->
@@ -37,7 +26,7 @@
               <label for="vapp">vApp Name</label>
               <form id="deployForm">
                   <input class="u-full-width" type="text" placeholder="BH2014-MalwareVM" id="vappName" required pattern="[a-zA-Z0-9\-]+" name="vapp">
-                  <input class="button-primary" type="submit" id="deployButton" value="Deploy to {{ $user.Name }}">
+                  <input class="button-primary" type="submit" id="deployButton" value="Deploy to {{ .user }}">
               </form>
 
                 <h4 id="ipHeader">IP Addresses</h4>

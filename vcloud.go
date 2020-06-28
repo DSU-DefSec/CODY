@@ -1,103 +1,154 @@
 package main
 
 import (
-    "fmt"
 	"errors"
-	"io/ioutil"
-	"net/http"
+	"fmt"
 	"net/url"
-	"strconv"
-	"strings"
-    "encoding/json"
+
+	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/types/v56"
 )
 
-func makeRequest(req *http.Request, data url.Values) (string, int, error) {
-	client := http.Client{}
-    // can i not hardcode this lol
-    req.SetBasicAuth("ghost_of_cutshaw", webDeployAPIPassword)
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", 400, err
-	}
-	defer resp.Body.Close()
-	body, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode >= 400 {
-		err = errors.New(string(body))
-	}
-    return string(body), resp.StatusCode, err
+type vCloudConfig struct {
+	VcdClient *govcd.VCDClient
+	Client    *govcd.Client
+	Org       *govcd.Org
+	Vdc       *govcd.Vdc
 }
 
-func vcloudAuth(username string, password string) error {
-	data := url.Values{}
-	data.Set("username", username)
-	data.Add("password", password)
-	req, err := http.NewRequest("POST", webDeployAPI+"/auth", strings.NewReader(data.Encode()))
+var vConfig vCloudConfig
+
+func initVCD() error {
+	apiEndPoint, err := url.Parse(vHref)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
-    _, _, err = makeRequest(req, data)
-	return err
+	fmt.Println("[vCloud] Creating VCD client...")
+	vcdClient := govcd.NewVCDClient(*apiEndPoint, vInsecure)
+	fmt.Println("[vCloud] Authenticating...")
+	err = vcdClient.Authenticate(vCloudUsername, vCloudPassword, vOrg)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+	fmt.Println("[vCloud] Getting org...")
+	org, err := vcdClient.GetOrgByName(vOrg)
+	if err != nil {
+		fmt.Println("entity", vOrg, "not found:", err)
+		return err
+	}
+	fmt.Println("[vCloud] Getting vdc...")
+	vdc, err := org.GetVDCByName(vVDC, true)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	vConfig = vCloudConfig{
+		VcdClient: vcdClient,
+		Client:    &vcdClient.Client,
+		Org:       org,
+		Vdc:       vdc,
+	}
+	return nil
 }
 
-func vappDeployUser(vapp string, destination string) (string, error) {
-
-    if ! validateName(vapp) {
-        return "", errors.New("Invalid name")
-    }
-
-	data := url.Values{}
-	data.Set("type", "user")
-	data.Add("scheduled", "false")
-	data.Add("vapp", vapp)
-	data.Add("destination", destination)
-	req, err := http.NewRequest("POST", webDeployAPI + "/deploy", strings.NewReader(data.Encode()))
-	if err != nil {
-		return "", err
+func vappDeploy(vapp string, user string) (string, error) {
+	if !validateName(vapp) {
+		return "", errors.New("Invalid name")
 	}
-    body, status, err := makeRequest(req, data)
-
-	if status >= 400 {
-		if status == 406 {
-			return "", errors.New("Invalid name")
-		} else if status == 409 {
-            id := vappData{}
-            err := json.Unmarshal([]byte(body), &id)
-            if err != nil {
-    			return "", err
-            } else {
-    			return id.Id, nil
-            }
-		} else {
-			return "", errors.New(body)
-		}
-	}
-	return body, err
+	return "id? vapp obj?", nil
+	// DEPLOY VAPP TO USER
 }
 
 func vappPowerAndIPs(id string) (string, error) {
-    ipString := ""
-    // power on
+	// POWER ON VAPP AND GET IPS.
+	return "ip1", nil
+}
 
-	data := url.Values{}
-	req, err := http.NewRequest("GET", webDeployAPI + "/vapp/" + id + "/ip", nil)
+func takeBoolPointer(value bool) *bool {
+	return &value
+}
+
+func takeIntPointer(value int) *int {
+	return &value
+}
+
+func testvCloud() {
+
+	vappName := "CoolBroMan"
+	vmName := "yep"
+	err := vConfig.Vdc.ComposeRawVApp(vappName)
 	if err != nil {
-		return "", err
+		fmt.Println("error creating vApp: %s", err)
 	}
 
-    body, status, err := makeRequest(req, data)
-    var imageInfo []imageData
-    json.Unmarshal([]byte(body), &imageInfo)
+	vapp, err := vConfig.Vdc.GetVAppByName(vappName, true)
+	if err != nil {
+		fmt.Println("unable to find vApp by name %s: %s", vappName, err)
+	}
+	// must wait until the vApp exits
+	err = vapp.BlockWhileStatus("UNRESOLVED", vConfig.VcdClient.Client.MaxRetryTimeout)
+	if err != nil {
+		fmt.Println("error waiting for created test vApp to have working state: %s", err)
+	}
 
-    if status != 200 {
-        fmt.Println("ERRRRER OEAJR AKSJN DKASHDNH askld nh")
-    }
-    fmt.Println("imagedat is ", imageInfo)
+	desiredNetConfig := &types.NetworkConnectionSection{}
+	desiredNetConfig.PrimaryNetworkConnectionIndex = 2
+	desiredNetConfig.NetworkConnection = append(desiredNetConfig.NetworkConnection,
+		&types.NetworkConnection{
+			IsConnected:             true,
+			IPAddressAllocationMode: types.IPAllocationModeNone,
+			Network:                 types.NoneNetwork,
+			NetworkConnectionIndex:  1,
+		},
+		&types.NetworkConnection{
+			IsConnected:             true,
+			IPAddressAllocationMode: types.IPAllocationModeNone,
+			Network:                 types.NoneNetwork,
+			NetworkConnectionIndex:  2,
+		})
 
-    for _, image := range imageInfo {
-        ipString += "<b>" + image.Name + "</b>: " + image.IP + ","
-    }
-    fmt.Println("ipstring is", ipString)
-    return ipString, nil
+	newDisk := types.DiskSettings{
+		AdapterType:       "5",
+		SizeMb:            int64(16384),
+		BusNumber:         0,
+		UnitNumber:        0,
+		ThinProvisioned:   takeBoolPointer(true),
+		OverrideVmDefault: true,
+	}
+	requestDetails := &types.RecomposeVAppParamsForEmptyVm{
+		CreateItem: &types.CreateItem{
+			Name:                      vmName,
+			NetworkConnectionSection:  desiredNetConfig,
+			Description:               "created by test",
+			GuestCustomizationSection: nil,
+			VmSpecSection: &types.VmSpecSection{
+				Modified:          takeBoolPointer(true),
+				Info:              "Virtual Machine specification",
+				OsType:            "debian10Guest",
+				NumCpus:           takeIntPointer(2),
+				NumCoresPerSocket: takeIntPointer(1),
+				CpuResourceMhz:    &types.CpuResourceMhz{Configured: 1},
+				MemoryResourceMb:  &types.MemoryResourceMb{Configured: 512},
+				MediaSection:      nil,
+				DiskSection:       &types.DiskSection{DiskSettings: []*types.DiskSettings{&newDisk}},
+				HardwareVersion:   &types.HardwareVersion{Value: "vmx-13"}, // need support older version vCD
+				VirtualCpuType:    "VM32",
+			},
+		},
+		AllEULAsAccepted: true,
+	}
+
+	vm, err := vapp.AddEmptyVm(requestDetails)
+	if err != nil {
+		fmt.Println("error creating empty VM: %s", err)
+	}
+	fmt.Println(vm)
+}
+
+func vcloudAuth(username, password string) error {
+	_, err := vConfig.VcdClient.GetAuthResponse(username, password, vOrg)
+	return err
 }

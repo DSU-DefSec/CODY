@@ -1,0 +1,79 @@
+{{ template "head.html" "About" }}
+{{ template "sidebar.html" . }}
+
+<!-- Deployment box
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<div class="nine columns sectionContainer">
+
+	<!-- Display error
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	{{ if .error }}
+	<div class="error">
+		{{ .error }}
+	</div>
+	<br>
+	{{ end }}
+
+	<!-- Display message
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	{{ if .msg }}
+	<div class="msg">
+		{{ .msg }}
+	</div>
+	<br>
+	{{ end }}
+
+	<p>Create a new lesson through this form.</p>
+	<form method="POST">
+		<label>
+			Title
+			<input
+			type="text"
+			name="title"
+			minlength="3"
+			class="u-full-width"
+			placeholder="DLXXX Lesson Title"
+			title="alphanumerics and dash only"
+			pattern="[a-zA-Z0-9-]+"
+			required />
+		</label>
+		<label>
+			vApp
+			<input
+			type="text"
+			name="vapp"
+			minlength="3"
+			class="u-full-width"
+			placeholder="BH2014-MalwareVM"
+			title="alphanumerics and dash only"
+			pattern="[a-zA-Z0-9-]+"
+			required />
+		</label>
+		<label>
+			Description
+			<input
+			type="text"
+			name="description"
+			minlength="3"
+			class="u-full-width"
+			title="alphanumerics, space, dot, and dash only"
+			placeholder="Lesson description"
+			pattern="[a-zA-Z0-9 -.]+"
+			required />
+		</label>
+		<label>
+			Video
+			<input
+			type="text"
+			name="video"
+			minlength="3"
+			class="u-full-width"
+			placeholder="dQw4w9WgXcQ"
+			title="youtube id"
+			pattern="[a-zA-Z0-9]+"
+			required />
+		</label>
+		<button class="btn btn-primary" type="submit" role="button">Generate</button>
+	</div>
+
+{{ template "footer.html" }}

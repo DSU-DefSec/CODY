@@ -1,3 +1,8 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
     <!-- Metadata and resources
     –––––––––––––––––––––––––––––––––––––––––––––––––– -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +12,7 @@
     <link rel="stylesheet" href="/assets/main.css">
     <link rel="icon" type="image/png" href="/assets/favicon.ico">
     <script src="/assets/feather.min.js"></script>
+	<title>{{ . }}</title>
     <script> var site = "localhost:8080"; </script>
 
 </head>
@@ -23,5 +29,8 @@
                     </a>
                 </div>
                 &nbsp;
-
             </div>
+            <div class="nine columns">
+                <h2>{{ . }}</h2>
+            </div>
+		</div>

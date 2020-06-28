@@ -2,22 +2,18 @@ package main
 
 import (
 	"fmt"
-	"github.com/gin-gonic/contrib/sessions"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/gin-contrib/sessions"
 )
 
-var prevPath string = "/"
-
-const (
-	userkey = "user"
-)
+var userkey = "user"
 
 func AuthRequired(c *gin.Context) {
 	session := sessions.Default(c)
 	user := session.Get(userkey)
-	prevPath = c.Request.URL.Path
 	if user == nil {
 		c.Redirect(http.StatusSeeOther, "/login")
 		c.Abort()
@@ -50,11 +46,10 @@ func login(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
 		return
 	}
-	c.Redirect(http.StatusSeeOther, prevPath)
-	prevPath = "/"
+	c.Redirect(http.StatusSeeOther, "/")
 }
 
-func getUserName(c *gin.Context) string {
+func getUser(c *gin.Context) string {
 	session := sessions.Default(c)
 	return fmt.Sprintf("%s", session.Get(userkey))
 }
