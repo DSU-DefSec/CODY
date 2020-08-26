@@ -1,5 +1,25 @@
-# C.O.D.Y.: Center for Opportunist DefSec Youths
+# C.O.D.Y.: Center for Opportunist {Def, and Off}Sec Youths
 
-This web application allows students to easily deploy vApps to themselves and to browse DefSec lectures.
+This web application allows students to easily deploy vApps to themselves and to browse lectures.
 
-![CODY About Page Screenshot](assets/CODY.png)
+## Description format
+
+Newline-separated video descriptions:
+```
+Identifier (ex. DL101)
+Title (ex. Command Line Usage for Noobs)
+Description (ex. Teach noobs how to use the command line for...)
+-----
+Slides: slides url
+PDF: pdf
+```
+
+## Configuration
+
+```
+playlistid = ["playlistidhere",]
+vcloudusername = "username"
+vcloudpassword = "password"
+vcloudadmin = ["adminusername",]
+developerkey = "youtubeapikey"
+```

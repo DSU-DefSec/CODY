@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/sessions"
+	"github.com/gin-gonic/gin"
 )
 
 var userkey = "user"
@@ -19,6 +19,31 @@ func AuthRequired(c *gin.Context) {
 		c.Abort()
 	}
 	c.Next()
+}
+
+func AdminRequired(c *gin.Context) {
+	session := sessions.Default(c)
+	user := session.Get(userkey)
+	if user == nil {
+		c.Redirect(http.StatusSeeOther, "/login")
+		c.Abort()
+	} else {
+		if !isAdmin(user.(string)) {
+			c.Redirect(http.StatusSeeOther, "/")
+			c.Abort()
+		}
+	}
+	c.Next()
+}
+
+func isAdmin(userName string) bool {
+	for _, admin := range codyConf.VCloudAdmin {
+		if userName == admin {
+			return true
+		}
+	}
+	return false
+
 }
 
 // login is a handler that parses a form and checks for specific data

@@ -1,56 +1,79 @@
 package main
 
 import (
-    "flag"
-    "fmt"
+	"fmt"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"regexp"
 
+	"github.com/BurntSushi/toml"
+
 	"github.com/google/uuid"
-	"github.com/gin-gonic/gin"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-gonic/gin"
 )
 
-func init() {
-	flag.StringVar(&vCloudUsername, "u", "", "Username for the vCloud account")
-	flag.StringVar(&vCloudPassword, "p", "", "Password for the vCloud account")
-	flag.StringVar(&vCloudAdmin, "a", "", "Username for the C.O.D.Y. admin")
-	flag.Parse()
+type config struct {
+	PlaylistId     []string
+	VCloudUsername string
+	VCloudPassword string
+	VCloudAdmin    []string
+	DeveloperKey   string
+	DarkMode       bool
+}
+
+type lessonData struct {
+	Id          string
+	Title       string
+	Description string
+	VApp        string
+	Video       string
+	Slides      string
+	PDF         string
 }
 
 const (
-	vOrg      = "Defsec"
-	vHref     = "https://vcloud.ialab.dsu.edu/api"
-	vVDC      = "DefSec_Default"
-	vInsecure = false
+	ConfigFile = "cody.conf"
+	vOrg       = "Defsec"
+	vHref      = "https://vcloud.ialab.dsu.edu/api"
+	vVDC       = "DefSec_Default"
+	vInsecure  = false
 )
 
-// Web-Deploy API Endpoint
-var vCloudUsername string
-var vCloudPassword string
-var vCloudAdmin string
-var buttonArray map[string][]string = make(map[string][]string)
+var (
+	codyConf       = &config{}
+	globalPlaylist = []lessonData{}
+)
 
 func main() {
-
-	if vCloudUsername == "" || vCloudPassword == "" || vCloudAdmin == "" {
-		fmt.Println("Missing parameters.")
-		fmt.Println("Usage: ./cody -u username -p password -a admin")
+	configContent, err := ioutil.ReadFile(ConfigFile)
+	if err != nil {
+		log.Fatalln("error reading config file " + ConfigFile + ": " + err.Error())
+	}
+	if _, err := toml.Decode(string(configContent), &codyConf); err != nil {
+		log.Fatalln("error decoding toml: " + err.Error())
+	}
+	if codyConf.VCloudUsername == "" || codyConf.VCloudPassword == "" || len(codyConf.VCloudAdmin) == 0 {
+		fmt.Println("Missing options. Make sure you include vCloud settings and at least one playlistid.")
 		return
 	}
 
 	// Initialize vCloud connection
-	initVCD()
+	err = initVCD()
+	if err != nil {
+		panic(err)
+	}
 
-	// reset Db (dev only reee)
-	resetDB()
+	//refreshPlaylistData()
 
 	// Initialize Gin router
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 	r.Static("/assets", "./assets")
 	store := cookie.NewStore([]byte(uuid.New().String()))
+	//store := cookie.NewStore([]byte("2314irj"))
 	r.Use(sessions.Sessions("codySession", store))
 
 	// Routes
@@ -70,44 +93,62 @@ func main() {
 		routes.GET("/logout", logout)
 	}
 
-	internalRoutes := routes.Group("/")
-	internalRoutes.Use(AuthRequired)
+	authRoutes := routes.Group("/")
+	authRoutes.Use(AuthRequired)
 	{
-		internalRoutes.GET("/", learn)
-		internalRoutes.GET("/learn", learn)
-		internalRoutes.GET("/learn/:vapp", lesson)
-		internalRoutes.GET("/deploy", deploy)
-		internalRoutes.GET("/deploy/ws", deployWS)
-		internalRoutes.GET("/about", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "about.html", pageData(c, gin.H{}))
-		})
-		internalRoutes.GET("/create", displayLesson)
-		internalRoutes.POST("/create", createLesson)
+		authRoutes.GET("/", learn)
+		authRoutes.GET("/learn", learn)
+		authRoutes.GET("/learn/:id", lesson)
+		authRoutes.GET("/deploy", deploy)
+		authRoutes.GET("/deploy/ws", deployWS)
+	}
+
+	adminRoutes := routes.Group("/")
+	adminRoutes.Use(AdminRequired)
+	{
+		adminRoutes.GET("/settings", settings)
+		adminRoutes.GET("/refresh", refresh)
 	}
 
 	r.Run()
 }
 
-///////////////////
-// GET Endpoints //
-///////////////////
+func findLesson(id string, lessons []lessonData) lessonData {
+	var nilLesson lessonData
+	if !validateName(id) {
+		return nilLesson
+	}
+	for _, lesson := range lessons {
+		if lesson.Id == id {
+			return lesson
+		}
+	}
+	return nilLesson
+}
 
 func learn(c *gin.Context) {
-	lessons := getEvents(10)
-	c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"lessons": lessons}))
+	c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"lessons": globalPlaylist}))
+}
+
+func settings(c *gin.Context) {
+	c.HTML(http.StatusOK, "settings.html", pageData(c, gin.H{"lessons": globalPlaylist}))
+}
+
+func refresh(c *gin.Context) {
+	refreshPlaylistData()
+	c.Redirect(http.StatusSeeOther, "/")
+}
+
+func refreshPlaylistData() {
+	// No support for multiple playlists right now.
+	globalPlaylist = retrievePlaylist(codyConf.PlaylistId[0])
 }
 
 func lesson(c *gin.Context) {
-	vapp := c.Param("vapp")
-	if !validateName(vapp) {
-		lessons := getEvents(10)
-		c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"error": "Sorry, that lesson name isn't valid.", "lessons": lessons}))
-		return
-	}
-	lesson, _ := getEvent("vapp", vapp)
-	if lesson.Vapp == "" {
-		lessons := getEvents(10)
-		c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"error": "Sorry, that lesson doesn't exist.", "lessons": lessons}))
+	id := c.Param("id")
+	var lesson lessonData
+	if lesson = findLesson(id, globalPlaylist); lesson.Id == "" {
+		c.HTML(http.StatusOK, "learn.html", pageData(c, gin.H{"error": "Sorry, that lesson name isn't valid.", "lessons": globalPlaylist}))
 		return
 	}
 	c.HTML(http.StatusOK, "lesson.html", pageData(c, gin.H{"lesson": lesson}))
@@ -121,33 +162,6 @@ func displayLesson(c *gin.Context) {
 	c.HTML(http.StatusOK, "create.html", pageData(c, gin.H{"user": getUser(c)}))
 }
 
-////////////////////
-// POST Endpoints //
-////////////////////
-
-func createLesson(c *gin.Context) {
-	c.Request.ParseForm()
-	title := c.Request.Form.Get("title")
-	vapp := c.Request.Form.Get("vapp")
-	description := c.Request.Form.Get("description")
-	video := c.Request.Form.Get("video")
-	if title == "" || vapp == "" {
-		c.JSON(http.StatusBadRequest, "Bad request")
-		return
-	}
-	err := addEvent(Event{
-		Type:   10,
-		Title:  title,
-		Vapp:   vapp,
-		Field1: description,
-		Field2: video,
-		Field3: "pdf", // placeholder
-	})
-    fmt.Println(err)
-	c.Redirect(http.StatusSeeOther, "/learn")
-}
-
-
 //////////////////////
 // Helper functions //
 //////////////////////
@@ -155,8 +169,8 @@ func createLesson(c *gin.Context) {
 func pageData(c *gin.Context, ginMap gin.H) gin.H {
 	newGinMap := gin.H{}
 	newGinMap["user"] = getUser(c)
-	newGinMap["admin"] = vCloudAdmin
-	newGinMap["isAdmin"] = (newGinMap["user"] == newGinMap["admin"])
+	newGinMap["admin"] = isAdmin(newGinMap["user"].(string))
+	newGinMap["dark"] = codyConf.DarkMode
 	for key, value := range ginMap {
 		newGinMap[key] = value
 	}
@@ -164,6 +178,6 @@ func pageData(c *gin.Context, ginMap gin.H) gin.H {
 }
 
 func validateName(name string) bool {
-    inputValidation := regexp.MustCompile(`^[a-zA-Z0-9\-]+$`)
+	inputValidation := regexp.MustCompile(`^[a-zA-Z0-9\-]+$`)
 	return inputValidation.MatchString(name)
 }

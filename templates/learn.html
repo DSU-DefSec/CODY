@@ -16,7 +16,7 @@
 
                 <form>
                   <label for="lesson">Lesson Identifier or Title</label>
-                  <input class="u-full-width" type="text" placeholder="DL101" id="lesson">
+                  <input class="u-full-width" type="text" placeholder="ex., DL101 or CLI Usage" id="lesson">
                 </form>
 
                 <!-- Available Lessons
@@ -28,19 +28,18 @@
                     </div>
                 </div>
                 {{ end }}
+                <div class="row">
                 {{ range $lesson := .lessons }}
-                <div class="row sectionItem">
-                    <div class="two columns sectionItemTitle">
-                        <i data-feather="book"></i>
-                    </div>
-                    <a href="/learn/{{ $lesson.Vapp }}">
-                        <div class="three columns sectionItemTitle lessonIdentifier">
-                            {{ $lesson.Vapp }}
+                    <div class="three columns sectionItem">
+                        <div class="row">
+                            <a href="/learn/{{ $lesson.Id }}">
+                            {{ $lesson.Id }}
+                            </a>
+                            {{ $lesson.Title }}
                         </div>
-                    </a>
-                    <div class="six columns sectionItemTitle">{{ $lesson.Title }}</div>
-                </div>
+                    </div>
                 {{ end }}
+                </div>
                 <br>
             </div>
 

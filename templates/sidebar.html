@@ -5,15 +5,13 @@
                 <div id="sideNav">
                     <a href="/learn"><div>Learn</div></a>
                     <a href="/deploy"><div>Deploy</div></a>
-					{{ if .isAdmin }}
-                    <a href="/create"><div>New</div></a>
-					{{ end }}
-                    <a href="/about"><div>About</div></a>
-                    <a href="/logout"><div>Logout</div></a>
+                    {{ if .admin }}
+                    <a href="/settings"><div>Settings</div></a>
+                    {{ end }}
                 </div>
                 <hr>
-                Logged in as:<br>
-                <b>{{ .user }}</b><br>
+                {{ .user }}
+                <a href="/logout" style="text-decoration: none"><div>Logout</div></a>
 
             <hr>
             </div>

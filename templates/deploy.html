@@ -33,6 +33,10 @@
                 <div id="ipBox"></div>
             </div>
 
+            <noscript>
+                This just flat out doesn't work without JS, sorry bud. The code is open source and pretty short if you'd like to audit it.
+            </noscript>
+
             <script>
 
                 url = 'ws://' + site + '/deploy/ws';
@@ -51,19 +55,19 @@
                         c.onmessage = (msg) => {
                             getIPs(msg);
                         }
-                        $("#deployButton").attr("value", "Suspend")
-                        clientMessage = "Suspend VAPP_ID_HERE"
+                        $("#deployButton").attr("value", "Delete")
+                        clientMessage = "Delete VAPP_ID_HERE"
                     }
                 }
 
                 function getIPs(msg) {
-                    $("#ipHeader").toggle();
+                    //$("#ipHeader").toggle();
                     ipString = ""
                     ipData = msg.data.split(",")
                     for (var i = 0; i < ipData.length; i++) {
                         ipString += ipData[i] + "<br>"
                     }
-                    $("#ipBox").html(ipString);
+                    //$("#ipBox").html(ipString);
                     c.onmessage = (msg) => {
                         defaultMsg(msg);
                     }
@@ -71,12 +75,9 @@
 
                 $("#deployForm").submit(function (e) {
                     e.preventDefault();
-                    if clientMessage == "" {
-                        clientMessage = $("#vappName").val();
-                    }
+                    clientMessage = $("#vappName").val();
                     c.send(clientMessage);
                 })
-
             </script>
 
 {{ template "footer.html" }}

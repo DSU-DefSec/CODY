@@ -4,9 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
-	"github.com/vmware/go-vcloud-director/govcd"
-	"github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 type vCloudConfig struct {
@@ -18,6 +19,11 @@ type vCloudConfig struct {
 
 var vConfig vCloudConfig
 
+func vcloudAuth(username, password string) error {
+	_, err := vConfig.VcdClient.GetAuthResponse(username, password, vOrg)
+	return err
+}
+
 func initVCD() error {
 	apiEndPoint, err := url.Parse(vHref)
 	if err != nil {
@@ -27,7 +33,7 @@ func initVCD() error {
 	fmt.Println("[vCloud] Creating VCD client...")
 	vcdClient := govcd.NewVCDClient(*apiEndPoint, vInsecure)
 	fmt.Println("[vCloud] Authenticating...")
-	err = vcdClient.Authenticate(vCloudUsername, vCloudPassword, vOrg)
+	err = vcdClient.Authenticate(codyConf.VCloudUsername, codyConf.VCloudPassword, vOrg)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -58,6 +64,74 @@ func vappDeploy(vapp string, user string) (string, error) {
 	if !validateName(vapp) {
 		return "", errors.New("Invalid name")
 	}
+
+	vapp = strings.TrimSpace(vapp)
+	user = strings.TrimSpace(user)
+	name := user + "-" + vapp
+	storageProfileName := "Defsec"
+	networkName := "DefSec_01"
+
+	// get catalocg
+	catalog, err := vConfig.Org.FindCatalog("Other") // TODO change to DefSec_Lessons
+	if err != nil {
+		return "", err
+	} else if catalog.Catalog == nil {
+		return "", errors.New("Catalog not found")
+	}
+
+	item, err := catalog.GetCatalogItemByName(strings.TrimSpace(vapp), true)
+	if err != nil {
+		return "", err
+	} else if item == nil {
+		return "", errors.New("Catalog item not found")
+	}
+	fmt.Println(item)
+
+	// find vapp template
+	vappTemplate, err := item.GetVAppTemplate()
+	if err != nil {
+		panic(err)
+	}
+
+	var networks []*types.OrgVDCNetwork
+	net, err := vConfig.Vdc.GetOrgVdcNetworkByName(networkName, false)
+	if err != nil {
+		return "", fmt.Errorf("error finding network : %s, err: %s",
+			networkName, err)
+	}
+	networks = append(networks, net.OrgVDCNetwork)
+
+	// Get StorageProfileReference
+	storageProfileRef, err := vConfig.Vdc.FindStorageProfileReference(storageProfileName)
+	if err != nil {
+		return "", fmt.Errorf("error finding storage profile: %s", err)
+	}
+
+	task, err := vConfig.Vdc.ComposeVApp(networks, vappTemplate, storageProfileRef, name, "description", true)
+	if err != nil {
+		//return "", fmt.Errorf("error composing vapp: %s", err)
+		return "", errors.New("VApp already exists!")
+	}
+
+	// After a successful creation, the entity is added to the cleanup list.
+	// If something fails after this point, the entity will be removed
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return "", fmt.Errorf("error composing vapp: %s", err)
+	}
+	// Get VApp
+	vappLive, err := vConfig.Vdc.GetVAppByName(name, true)
+	if err != nil {
+		return "", fmt.Errorf("error getting vapp: %s", err)
+	}
+
+	err = vappLive.BlockWhileStatus("UNRESOLVED", vConfig.Client.MaxRetryTimeout)
+	if err != nil {
+		return "", fmt.Errorf("error waiting for created test vApp to have working state: %s", err)
+	}
+	if err != nil {
+		fmt.Println("error creating vApp: %s", err)
+	}
 	return "id? vapp obj?", nil
 	// DEPLOY VAPP TO USER
 }
@@ -75,8 +149,8 @@ func takeIntPointer(value int) *int {
 	return &value
 }
 
+/*
 func testvCloud() {
-
 	vappName := "CoolBroMan"
 	vmName := "yep"
 	err := vConfig.Vdc.ComposeRawVApp(vappName)
@@ -147,8 +221,4 @@ func testvCloud() {
 	}
 	fmt.Println(vm)
 }
-
-func vcloudAuth(username, password string) error {
-	_, err := vConfig.VcdClient.GetAuthResponse(username, password, vOrg)
-	return err
-}
+*/

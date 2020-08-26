@@ -1,0 +1,32 @@
+{{ template "head.html" "About" }}
+{{ template "sidebar.html" . }}
+
+<!-- Deployment box
+–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+<div class="nine columns sectionContainer">
+
+	<!-- Display error
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	{{ if .error }}
+	<div class="error">
+		{{ .error }}
+	</div>
+	<br>
+	{{ end }}
+
+	<!-- Display message
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	{{ if .msg }}
+	<div class="msg">
+		{{ .msg }}
+	</div>
+	<br>
+	{{ end }}
+
+	<button class="btn btn-primary" type="submit" role="button">
+		<a href="/refresh">
+			Refresh lists
+		</a>
+	</button>
+
+{{ template "footer.html" }}
